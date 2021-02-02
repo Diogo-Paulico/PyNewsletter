@@ -7,14 +7,28 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+
 def buildContacts():
+    global df
     df = pd.read_csv(CSV_FILE)
     contacts = df.Email
     return contacts
 
+
+buildContacts()
+
 emailBodyFile = open(TEXT_BODY_FILE,'r')
 
 body = emailBodyFile.read()
+
+
+def removeSubscriber(email):
+    global df
+    count = df.Email.count()
+    df = df[df.Email != email]
+    df.Email.to_csv('contactsFalse.csv', index = False)
+    return (df.Email.count() != count)
+    
 
 
 def messageBuilder(email_receiver):
@@ -42,4 +56,4 @@ def emailSend():
         
     print('Sent ' + str(counter) + ' out of '+ str(contacts.size) + ' emails.')
 
-emailSend()
+print('yes')
