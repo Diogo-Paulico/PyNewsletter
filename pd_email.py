@@ -1,4 +1,4 @@
-import email, smtplib, ssl, datetime, poplib
+import email, smtplib, ssl, datetime, sys, imaplib, email.header
 import pandas as pd
 
 from config import *
@@ -15,34 +15,90 @@ def buildContacts():
     return contacts
 
 
-buildContacts()
-
 emailBodyFile = open(TEXT_BODY_FILE,'r')
 
 body = emailBodyFile.read()
 
 
 def removeSubscriber(email):
+    print (email)
     global df
     count = df.Email.count()
     df = df[df.Email != email]
-    df.Email.to_csv('contactsFalse.csv', index = False)
+    df.Email.to_csv(CSV_FILE, index = False)
     return (df.Email.count() != count)
+
+
+def getUnsubscribers():
     
+    emailsToRemove=[]
+    
+    M = imaplib.IMAP4_SSL(IMAP_ADRESS)
+
+    try:
+        rv, data = M.login(SENDER_EMAIL, PASSWORD)
+    except imaplib.IMAP4.error:
+        print ("LOGIN FAILED!!! ")
+        sys.exit(1)
+
+    rv, data = M.select(EMAIL_FOLDER)
+    if rv != 'OK':
+        M.logout()
+        return
+    
+    rv, data = M.search(None, '(UNSEEN)')
+    if rv != 'OK' or str(data[0]) == "b''":
+        print("No messages found!")
+        return
+
+    for num in data[0].split():
+        rv, data = M.fetch(num, '(RFC822)')
+        if rv != 'OK':
+            print("ERROR getting message", num) 
+            return
+
+        msg = email.message_from_bytes(data[0][1])
+        hdr = email.header.make_header(email.header.decode_header(msg['Subject']))
+        subject = str(hdr)
+        emailFrom = str(email.utils.parseaddr(msg['From'])[1])
+        if subject == CANCEL_SUBJECT_KEYWORD:
+            emailsToRemove.append(emailFrom.strip())
+           # print('Added to remove:', emailFrom)
+    M.close()
+    M.logout()
+    return emailsToRemove
+
+
+def unsubHandler():
+    count = 0
+    toUnsub = getUnsubscribers()
+    emailingListChanged = False
+    if toUnsub:
+        for email in toUnsub:
+            emailingListChanged = removeSubscriber(email)
+            count += 1
+        print('Removed %d subscribers' % (count)) 
+    else:
+        print('No subscribers removed')
+    return emailingListChanged
+
 
 
 def messageBuilder(email_receiver):
         message = MIMEMultipart()
-        message["From"] = SENDER_EMAIL
+        message["From"] = SENDER_NAME
         message["To"] = email_receiver
         message["Subject"] = SUBJECT
 
         message.attach(MIMEText(body, "plain"))
         return message.as_string()
 
-def emailSend():
+def newsletterSend():
+    contacts = buildContacts()
+    unsubHandler()
     contacts = buildContacts()
     counter = 0
+   
     
     context = ssl.create_default_context() 
     with smtplib.SMTP_SSL(SMTP_ADRESS, SSL_PORT, context=context) as server:
@@ -56,4 +112,4 @@ def emailSend():
         
     print('Sent ' + str(counter) + ' out of '+ str(contacts.size) + ' emails.')
 
-print('yes')
+newsletterSend()
