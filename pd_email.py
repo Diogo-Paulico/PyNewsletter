@@ -7,7 +7,8 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-
+# Loads the csv file given by the CSV_FILE variable
+# @return -> list of email addresses contained in the column Email
 def buildContacts():
     global df
     df = pd.read_csv(CSV_FILE)
@@ -17,7 +18,8 @@ def buildContacts():
 # Loads the email body from the TEXT_BODY_FILE
 body = open(TEXT_BODY_FILE,'r').read()
 
-
+# Removes the given email from the loaded CSV file containing the emails
+# @return -> True is the emailing list changed, False otherwise
 def removeSubscriber(email_to_remove):
     global df
     count = df.Email.count()
@@ -26,6 +28,8 @@ def removeSubscriber(email_to_remove):
     return (df.Email.count() != count)
 
 
+# will use the IMAP protocol to check the EMAIL_FOLDER for unseen messages with the subject given by CANCEL_SUBJECT_KEYWORD
+# @return -> the list of emails to be removed
 def getUnsubscribers():
     
     emailsToRemove=[]
@@ -62,7 +66,9 @@ def getUnsubscribers():
     M.logout()
     return emailsToRemove
 
-
+# will handle all the unsubcribing, getting the emails to unsubscribe using the getUnsubscribers() function
+# and remove them using the removeSubscriber(email_to_remove) function
+# @return -> list of email adresses removed from the mailing list
 def unsubHandler():
     count = 0
     toUnsub = getUnsubscribers()
@@ -80,7 +86,8 @@ def unsubHandler():
     return unSubd
 
 
-
+# builds the message object for the emails given the email adress of the receiver (email_receiver)
+# @return -> message object "stringified"
 def messageBuilder(email_receiver):
         message = MIMEMultipart()
         message["From"] = SENDER_NAME
@@ -90,7 +97,9 @@ def messageBuilder(email_receiver):
         message.attach(MIMEText(body, "plain"))
         return message.as_string()
 
-def newsletterSend():
+# builds the message object for the unsubscribed emails given the email adress of the receiver (email_receiver) and the path to the file containing the 
+# message to be sent to unsubscribers (UNSUB_BODY_FILE) 
+# @return -> message object "stringified"
 def unsubMessageBuilder(email_receiver):
         unsubBody = open(UNSUB_BODY_FILE,'r').read()
         message = MIMEMultipart()
@@ -100,6 +109,11 @@ def unsubMessageBuilder(email_receiver):
 
         message.attach(MIMEText(unsubBody, "plain"))
         return message.as_string()
+
+# Will import the email adresses, handle unsubscribing emails using the previously defined functions,
+# then it will send the unsub message to emails that asked to be removed if SEND_UNSUB_MESSAGE is set to True 
+# and the newsletter to the emails present in the emailing list
+def pyNewsletter():
     contacts = buildContacts()
     unsubEmails = unsubHandler()
     contacts = buildContacts()
@@ -120,4 +134,4 @@ def unsubMessageBuilder(email_receiver):
         
     print('Sent ' + str(counter) + ' out of '+ str(contacts.size) + ' emails.')
 
-newsletterSend()
+pyNewsletter()
