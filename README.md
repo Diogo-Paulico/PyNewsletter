@@ -1,6 +1,6 @@
 # PyNewsletter
 
-Allows you to send newsletters (whose content is purely text) by email and handle the unsubcribing of users
+Allows you to send newsletters (whose content is purely text) by email and handle the unsubcribing of users (removing them from the CSV emailing list and sending them a message when they unsubscribe if that option is enabled in the [config.py](config.py))
 
 ## Getting it up and Running
 
@@ -16,7 +16,7 @@ pip3 install pandas
 ## Adapting it to your needs
 
 
-All you need to do is modify the config.py file to get it to work for your needs<br/>
+All you need to do is modify the [config.py](config.py) file to get it to work for your needs<br/>
 DISCLAIMER: This was only tested using a Gmail account it may not work for other email accounts
 
 ## Authors
