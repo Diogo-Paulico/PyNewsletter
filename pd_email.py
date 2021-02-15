@@ -46,9 +46,8 @@ def getUnsubscribers():
         M.logout()
         return
     
-    rv, data = M.search(None, '(UNSEEN)')
+    rv, data = M.search(None, '(UNSEEN SUBJECT "{0}")'.format(CANCEL_SUBJECT_KEYWORD))
     if rv != 'OK' or str(data[0]) == "b''":
-        print("No messages found!")
         return
 
     for num in data[0].split():
@@ -61,9 +60,7 @@ def getUnsubscribers():
         hdr = email.header.make_header(email.header.decode_header(msg['Subject']))
         subject = str(hdr)
         emailFrom = str(email.utils.parseaddr(msg['From'])[1])
-        if subject == CANCEL_SUBJECT_KEYWORD:
-            emailsToRemove.append(emailFrom.strip())
-           # print('Added to remove:', emailFrom)
+        emailsToRemove.append(emailFrom.strip())
     M.close()
     M.logout()
     return emailsToRemove
