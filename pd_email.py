@@ -24,7 +24,7 @@ def removeSubscriber(email):
     print (email)
     global df
     count = df.Email.count()
-    df = df[df.Email != email]
+    df = df[df.Email != email_to_remove]
     df.Email.to_csv(CSV_FILE, index = False)
     return (df.Email.count() != count)
 
@@ -69,15 +69,18 @@ def getUnsubscribers():
 def unsubHandler():
     count = 0
     toUnsub = getUnsubscribers()
+    unSubd = []
     emailingListChanged = False
     if toUnsub:
         for email in toUnsub:
             emailingListChanged = removeSubscriber(email)
-            count += 1
+            if emailingListChanged:
+                count += 1
+                unSubd.append(email)
         print('Removed %d subscribers' % (count)) 
     else:
         print('No subscribers removed')
-    return emailingListChanged
+    return unSubd
 
 
 
@@ -91,16 +94,27 @@ def messageBuilder(email_receiver):
         return message.as_string()
 
 def newsletterSend():
+def unsubMessageBuilder(email_receiver):
+        unsubBody = open(UNSUB_BODY_FILE,'r').read()
+        message = MIMEMultipart()
+        message["From"] = SENDER_NAME
+        message["To"] = email_receiver
+        message["Subject"] = UNSUB_MESSAGE_SUBJECT
+
+        message.attach(MIMEText(unsubBody, "plain"))
+        return message.as_string()
     contacts = buildContacts()
-    unsubHandler()
+    unsubEmails = unsubHandler()
     contacts = buildContacts()
-    counter = 0
-   
-    
+    counter = 0 
     context = ssl.create_default_context() 
     with smtplib.SMTP_SSL(SMTP_ADRESS, SSL_PORT, context=context) as server:
             try: 
                 server.login(SENDER_EMAIL, PASSWORD)
+                if unsubEmails and SEND_UNSUB_MESSAGE:
+                    for unsubEmail in unsubEmails:
+                        server.sendmail(SENDER_EMAIL, unsubEmail, unsubMessageBuilder(unsubEmail))
+
                 for receiver_email in contacts:      
                     server.sendmail(SENDER_EMAIL, receiver_email, messageBuilder(receiver_email))
                     counter+=1
