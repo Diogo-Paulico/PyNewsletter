@@ -1,4 +1,4 @@
-import email, smtplib, ssl, datetime, sys, imaplib, email.header
+import email, smtplib, ssl, sys, imaplib, email.header
 import pandas as pd
 
 from config import *
@@ -14,14 +14,11 @@ def buildContacts():
     contacts = df.Email
     return contacts
 
-
-emailBodyFile = open(TEXT_BODY_FILE,'r')
-
-body = emailBodyFile.read()
+# Loads the email body from the TEXT_BODY_FILE
+body = open(TEXT_BODY_FILE,'r').read()
 
 
-def removeSubscriber(email):
-    print (email)
+def removeSubscriber(email_to_remove):
     global df
     count = df.Email.count()
     df = df[df.Email != email_to_remove]
