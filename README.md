@@ -21,7 +21,7 @@ DISCLAIMER: This was only tested using a Gmail account it may not work for other
 
 ## How does it work?
 
-* Load the contacts from the CSV file specified in the [config.py](config.py) 
+* Load the contacts from the CSV file specified in the [config.py](config.py) - An example CSV file is provided to help understand the format it should take (it must always contain a collumn named "Email" [contacts.csv](contacts.csv)
 * Check if anyone unsubscribed by accessing the email used to send the newsletters using the IMAP protocol, filtering by unseen messages with the subject specified in said config file (CANCEL_SUBJECT_KEYWORD)
 * Contacts unsubscribed will be removed from CSV, if SEND_UNSUB_MESSAGE is true, they will get an email you can specify in the config file
 * All the contacts that remain in the emailling list will be sent the newsletter specified in the config file
